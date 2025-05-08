@@ -1,22 +1,37 @@
 import type { WebhookRequestBody } from "@line/bot-sdk";
-import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
-
+import { NextRequest, NextResponse } from "next/server";
 import * as line from "@/lib/line";
 import { getRandomSpecialProductsMessage } from "@/services/line-bot-services";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// This is needed because we're handling the raw request body ourselves
+export const dynamic = "force-dynamic";
 
-function runMiddleware(req: NextApiRequest, res: NextApiResponse) {
-  return new Promise<void>((resolve, reject) => {
-    line.middleware(req, res, (result) => {
+// Middleware function adapted for App Router
+async function runMiddleware(req: NextRequest) {
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-line-signature") || "";
+  
+  // Create a mock request and response for the LINE middleware
+  const mockReq = {
+    body: JSON.parse(rawBody),
+    headers: {
+      "x-line-signature": signature
+    },
+    rawBody: Buffer.from(rawBody)
+  };
+  
+  const mockRes = {
+    status: () => mockRes,
+    send: () => mockRes,
+    end: () => {},
+  };
+
+  return new Promise<WebhookRequestBody>((resolve, reject) => {
+    line.middleware(mockReq, mockRes, (result) => {
       if (result instanceof Error) {
         reject(result);
       } else {
-        resolve();
+        resolve(mockReq.body);
       }
     });
   });
@@ -65,27 +80,29 @@ async function handleLineEvent(event: WebhookRequestBody["events"][number]) {
   }
 }
 
-const handler: NextApiHandler = async (req, res) => {
-  if (req.method !== "POST") {
-    return res.status(405).end(); // Method Not Allowed
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    await runMiddleware(req, res);
-
-    const body: WebhookRequestBody = req.body;
+    // Process the webhook with LINE middleware
+    const body = await runMiddleware(req);
+    
+    // Handle all events
     await Promise.all(body.events.map(handleLineEvent));
-
-    res.status(200).end();
+    
+    // Return success response
+    return new NextResponse(null, { status: 200 });
   } catch (err) {
     console.error("Error in handler:", err);
-
+    
     if (err instanceof Error) {
-      res.status(500).json({ name: err.name, message: err.message });
+      return NextResponse.json(
+        { name: err.name, message: err.message },
+        { status: 500 }
+      );
     } else {
-      res.status(500).json({ message: "Unknown error occurred" });
+      return NextResponse.json(
+        { message: "Unknown error occurred" },
+        { status: 500 }
+      );
     }
   }
-};
-
-export default handler;
+}
