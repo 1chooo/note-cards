@@ -1,5 +1,6 @@
 import type { WebhookRequestBody } from "@line/bot-sdk";
 import { NextRequest, NextResponse } from "next/server";
+
 import * as line from "@/lib/line";
 import { getRandomSpecialProductsMessage } from "@/services/line-bot-services";
 
@@ -10,16 +11,16 @@ export const dynamic = "force-dynamic";
 async function runMiddleware(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-line-signature") || "";
-  
+
   // Create a mock request and response for the LINE middleware
   const mockReq = {
     body: JSON.parse(rawBody),
     headers: {
-      "x-line-signature": signature
+      "x-line-signature": signature,
     },
-    rawBody: Buffer.from(rawBody)
+    rawBody: Buffer.from(rawBody),
   };
-  
+
   const mockRes = {
     status: () => mockRes,
     send: () => mockRes,
@@ -84,15 +85,15 @@ export async function POST(req: NextRequest) {
   try {
     // Process the webhook with LINE middleware
     const body = await runMiddleware(req);
-    
+
     // Handle all events
     await Promise.all(body.events.map(handleLineEvent));
-    
+
     // Return success response
     return new NextResponse(null, { status: 200 });
   } catch (err) {
     console.error("Error in handler:", err);
-    
+
     if (err instanceof Error) {
       return NextResponse.json(
         { name: err.name, message: err.message },
