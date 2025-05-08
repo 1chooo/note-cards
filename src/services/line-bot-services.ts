@@ -1,15 +1,29 @@
 import { Client, middleware } from "@line/bot-sdk";
+import { WebhookEvent } from "@line/bot-sdk";
 
 import { LINE_CONFIG } from "@/constants/line";
 import { MOCK_SPECIAL_PRODUCTS_DATA } from "@/constants/products";
 
 // client 主要是用來對 LINE Bot 進行操作。ex. 回覆、廣播
-export const client = new Client(LINE_CONFIG);
+if (!LINE_CONFIG.channelAccessToken || !LINE_CONFIG.channelSecret) {
+  throw new Error("LINE_CONFIG is missing required properties.");
+}
+export const client = new Client({
+  channelAccessToken: LINE_CONFIG.channelAccessToken,
+  channelSecret: LINE_CONFIG.channelSecret,
+});
 
 // middleware 是來驗證 webhook 回傳時的 x-line-signature 是否合法。
-export const lineMiddleware = middleware(LINE_CONFIG);
+export const lineMiddleware = middleware({
+  channelAccessToken: LINE_CONFIG.channelAccessToken!,
+  channelSecret: LINE_CONFIG.channelSecret!,
+});
 
-export const getRandomSpecialProductsMessage = async (event) => {
+export const getRandomSpecialProductsMessage = async (event: WebhookEvent) => {
+  if (event.type !== "message" || !("replyToken" in event)) {
+    throw new Error("Invalid event type or missing replyToken.");
+  }
+
   const randomProduct =
     MOCK_SPECIAL_PRODUCTS_DATA[
       Math.floor(Math.random() * MOCK_SPECIAL_PRODUCTS_DATA.length)
