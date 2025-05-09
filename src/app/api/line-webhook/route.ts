@@ -1,4 +1,4 @@
-import type { WebhookRequestBody } from "@line/bot-sdk";
+import type { WebhookEvent, WebhookRequestBody } from "@line/bot-sdk";
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -34,7 +34,7 @@ async function verifySignature(
   return JSON.parse(rawBody);
 }
 
-async function handleLineEvent(event: WebhookRequestBody["events"][number]) {
+async function handleLineEvent(event: WebhookEvent) {
   if (event.mode !== "active") return;
 
   try {
