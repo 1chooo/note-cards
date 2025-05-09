@@ -1,4 +1,4 @@
-import { middleware } from "@line/bot-sdk";
+import { middleware, MiddlewareConfig } from "@line/bot-sdk";
 import { WebhookEvent, messagingApi } from "@line/bot-sdk";
 
 import { LINE_CONFIG } from "@/constants/line";
@@ -14,10 +14,12 @@ if (!LINE_CONFIG.channelAccessToken || !LINE_CONFIG.channelSecret) {
   throw new Error("LINE_CONFIG is missing required properties.");
 }
 
-export const lineMiddleware = middleware({
-  channelAccessToken: LINE_CONFIG.channelAccessToken!,
-  channelSecret: LINE_CONFIG.channelSecret!,
-});
+const middlewareConfig: MiddlewareConfig = {
+  channelAccessToken: LINE_CONFIG.channelAccessToken,
+  channelSecret: LINE_CONFIG.channelSecret,
+};
+
+export const lineMiddleware = middleware(middlewareConfig);
 
 export const getRandomSpecialProductsMessage = async (event: WebhookEvent) => {
   if (event.type !== "message" || !("replyToken" in event)) {
