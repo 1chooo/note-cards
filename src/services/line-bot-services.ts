@@ -1,5 +1,9 @@
-import { middleware, MiddlewareConfig } from "@line/bot-sdk";
-import { WebhookEvent, messagingApi } from "@line/bot-sdk";
+import {
+  MiddlewareConfig,
+  WebhookEvent,
+  messagingApi,
+  middleware,
+} from "@line/bot-sdk";
 
 import { LINE_CONFIG } from "@/constants/line";
 import { MOCK_SPECIAL_PRODUCTS_DATA } from "@/constants/products";
@@ -28,34 +32,31 @@ export const getRandomSpecialProductsMessage = async (event: WebhookEvent) => {
 
   const randomProduct =
     MOCK_SPECIAL_PRODUCTS_DATA[
-    Math.floor(Math.random() * MOCK_SPECIAL_PRODUCTS_DATA.length)
+      Math.floor(Math.random() * MOCK_SPECIAL_PRODUCTS_DATA.length)
     ];
 
   const userId = event.source.userId;
-  return (
-    await client.pushMessage({
-      to: userId ?? "",
-      messages: [
-        {
-          type: "text",
-          text: `特價商品 $ 清單如下：\n\n ${randomProduct.name} 金額＄ ${randomProduct.price}`,
-          emojis: [
-            {
-              index: 5, // 看 $ 這個符號位於文字中的第幾個位子 (index 從 0 開始)
-              productId: "5ac21a8c040ab15980c9b43f",
-              emojiId: "067",
-            },
-          ],
-        },
-        {
-          type: "image",
-          originalContentUrl: randomProduct.img,
-          previewImageUrl: randomProduct.img,
-        },
-      ],
-    }
-    ));
-
+  return await client.pushMessage({
+    to: userId ?? "",
+    messages: [
+      {
+        type: "text",
+        text: `特價商品 $ 清單如下：\n\n ${randomProduct.name} 金額＄ ${randomProduct.price}`,
+        emojis: [
+          {
+            index: 5, // 看 $ 這個符號位於文字中的第幾個位子 (index 從 0 開始)
+            productId: "5ac21a8c040ab15980c9b43f",
+            emojiId: "067",
+          },
+        ],
+      },
+      {
+        type: "image",
+        originalContentUrl: randomProduct.img,
+        previewImageUrl: randomProduct.img,
+      },
+    ],
+  });
 };
 
 export const getExpireProductsListBroadcast = async () => {

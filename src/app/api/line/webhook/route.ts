@@ -36,24 +36,24 @@ async function verifySignature(
 }
 
 async function handleTextMessage(event: WebhookEvent & { type: "message" }) {
-  if (event.message.type !== "text") return
+  if (event.message.type !== "text") return;
 
-  const messageText = event.message.text.toLowerCase()
-  const userId = event.source.userId
+  const messageText = event.message.text.toLowerCase();
+  const userId = event.source.userId;
 
   if (!userId) {
-    console.log("Received message from user with no userId")
-    return
+    console.log("Received message from user with no userId");
+    return;
   }
 
   try {
     switch (messageText) {
       case "history": {
-        return await getRandomSpecialProductsMessage(event)
+        return await getRandomSpecialProductsMessage(event);
       }
       default: {
-        const profile = await line.client.getProfile(userId)
-        const name = profile.displayName
+        const profile = await line.client.getProfile(userId);
+        const name = profile.displayName;
 
         await line.client.pushMessage({
           to: userId,
@@ -63,19 +63,17 @@ async function handleTextMessage(event: WebhookEvent & { type: "message" }) {
               text: `Hello ${name}, you said: ${event.message.text}`,
             },
           ],
-        })
+        });
       }
     }
   } catch (error) {
-    console.error(
-      {
-        message: "Failed to handle text message",
-        userId,
-        text: event.message.text,
-        error,
-      },
-    )
-    throw error
+    console.error({
+      message: "Failed to handle text message",
+      userId,
+      text: event.message.text,
+      error,
+    });
+    throw error;
   }
 }
 
@@ -85,8 +83,8 @@ async function handleLineEvent(event: WebhookEvent) {
   try {
     switch (event.type) {
       case "message":
-        await handleTextMessage(event as WebhookEvent & { type: "message" })
-        break
+        await handleTextMessage(event as WebhookEvent & { type: "message" });
+        break;
       case "follow": {
         console.log("Follow event:", event);
         break;
