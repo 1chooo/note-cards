@@ -2,8 +2,8 @@ import {
   ClientConfig,
   MiddlewareConfig,
   middleware as lineMiddleware,
+  messagingApi,
 } from "@line/bot-sdk";
-import { messagingApi } from "@line/bot-sdk";
 
 import { LINE_CONFIG } from "@/constants/line";
 
