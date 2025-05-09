@@ -5,10 +5,11 @@ import { NextRequest, NextResponse } from "next/server";
 import * as line from "@/lib/line";
 import { getRandomSpecialProductsMessage } from "@/services/line-bot-services";
 
-// This is needed because we're handling the raw request body ourselves
 export const dynamic = "force-dynamic";
 
-// Verify LINE signature directly instead of using middleware
+/**
+ * Verify the LINE webhook signature
+ */
 async function verifySignature(
   req: NextRequest,
   channelSecret: string
@@ -34,46 +35,64 @@ async function verifySignature(
   return JSON.parse(rawBody);
 }
 
+async function handleTextMessage(event: WebhookEvent & { type: "message" }) {
+  if (event.message.type !== "text") return
+
+  const messageText = event.message.text.toLowerCase()
+  const userId = event.source.userId
+
+  if (!userId) {
+    console.log("Received message from user with no userId")
+    return
+  }
+
+  try {
+    switch (messageText) {
+      case "history": {
+        return await getRandomSpecialProductsMessage(event)
+      }
+      default: {
+        const profile = await line.client.getProfile(userId)
+        const name = profile.displayName
+
+        await line.client.pushMessage({
+          to: userId,
+          messages: [
+            {
+              type: "text",
+              text: `Hello ${name}, you said: ${event.message.text}`,
+            },
+          ],
+        })
+      }
+    }
+  } catch (error) {
+    console.error(
+      {
+        message: "Failed to handle text message",
+        userId,
+        text: event.message.text,
+        error,
+      },
+    )
+    throw error
+  }
+}
+
 async function handleLineEvent(event: WebhookEvent) {
   if (event.mode !== "active") return;
 
   try {
     switch (event.type) {
-      case "message": {
-        if (event.message.type === "text") {
-          const messageText = event.message.text;
-          switch (messageText.toLowerCase()) {
-            case "history": {
-              return getRandomSpecialProductsMessage(event);
-            }
-            default: {
-              const userId = event.source.userId;
-              const name = userId
-                ? (await line.client.getProfile(userId)).displayName
-                : "User";
-
-              await line.client.pushMessage({
-                to: userId ?? "",
-                messages: [
-                  {
-                    type: "text",
-                    text: `Hello ${name}, you said: ${messageText}`,
-                  },
-                ],
-              });
-
-              break;
-            }
-          }
-        }
-        break;
-      }
+      case "message":
+        await handleTextMessage(event as WebhookEvent & { type: "message" })
+        break
       case "follow": {
-        // Handle follow event here
+        console.log("Follow event:", event);
         break;
       }
       default: {
-        console.log("Unhandled event type:", event.type);
+        console.log("Unhandled event type:", event);
         break;
       }
     }
