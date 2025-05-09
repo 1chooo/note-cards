@@ -5,20 +5,22 @@ import {
 } from "@line/bot-sdk";
 import { messagingApi } from "@line/bot-sdk";
 
+import { LINE_CONFIG } from "@/constants/line";
+
 const { MessagingApiClient } = messagingApi;
 
 export const clientConfig: ClientConfig = {
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN || "",
-  channelSecret: process.env.CHANNEL_SECRET,
+  channelAccessToken: LINE_CONFIG.channelAccessToken || "",
+  channelSecret: LINE_CONFIG.channelSecret,
 };
 
 export const client = new MessagingApiClient({
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN || "",
+  channelAccessToken: LINE_CONFIG.channelAccessToken || "",
 });
 
 const middlewareConfig: MiddlewareConfig = {
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-  channelSecret: process.env.CHANNEL_SECRET || "",
+  channelAccessToken: LINE_CONFIG.channelAccessToken,
+  channelSecret: LINE_CONFIG.channelSecret || "",
 };
 
 export const middleware = lineMiddleware(middlewareConfig);
